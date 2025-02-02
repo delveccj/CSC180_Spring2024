@@ -30,26 +30,32 @@ Our goals for today are:
 
 When you get the server running, you will see an interface like this to control the malware clients.  This indeed will be fun!
 
-![]()
+![](caldera.png)
 
 ### Installation of Caldera and the Malware Clients ###
 
-### **Caldera Setup & Exploitation Guide**  
-🚀 **Step-by-step instructions to set up, deploy, and use MITRE Caldera in a controlled environment.**  
+**Remember, only use MITRE Caldera in a controlled environment and ethically!**  
 
 ---
 
 ## **1️⃣ Pull the Caldera Docker Container**  
-First, pull the latest **Caldera** image from Docker Hub:  
+We learned about containers a few weeks back.  It is the way software engineering is performed in 2025.  There is, of course, a container for Calder.  It is found here:
+
+[](https://hub.docker.com/r/mitre/caldera)
+
+So, what is the Caldera server?  It is a simple web server written in Python.  However, its business logic allows malware actors to manipulate victim machines.
+
+First, pull the **Caldera** image from Docker Hub:  
+
 ```bash
 docker pull mitre/caldera
 ```
-This ensures you have the latest version of Caldera.
 
 ---
 
 ## **2️⃣ Start the Caldera Server (Expose Port 8888)**  
-To **run the container** and expose port **8888** so you can access the UI:  
+To **run the container** and expose port **8888** so you can access the UI: 
+ 
 ```bash
 docker run -d --name caldera -p 8888:8888 mitre/caldera
 ```
@@ -61,11 +67,13 @@ To verify it's running:
 ```bash
 docker ps
 ```
+We can consider at this point that there are two machines.  First is your lab workstation.  Second is the container running Caldera.
 
 ---
 
 ## **3️⃣ Bash into the Caldera Server**  
 Now, let’s access the **Caldera server’s command line inside the container**:  
+
 ```bash
 docker exec -it caldera /bin/bash
 ```
@@ -73,55 +81,73 @@ docker exec -it caldera /bin/bash
 - `caldera` → The name of the running container.  
 
 You should now see a prompt **inside the container**, something like:  
+
 ```plaintext
 root@abc123456789:/app#
 ```
+Type ps to see the running processes.  Not much is there.  We nbeed to start the server!
 
 ---
 
 ## **4️⃣ Start the Caldera Server**
-Once inside the container, navigate to the Caldera directory:  
+
+Once inside the container, navigate to the Caldera directory - which should just be the root.  You should see this if you do an ```ls```:  
+
 ```bash
-cd /app
+root@ae0953a5fd96:/usr/src/app# ls     
+LICENSE  SECURITY.md  app  conf  data  plugins  requirements.txt  server.py  static  templates
 ```
+
 Then, **start the Caldera server manually**:  
 ```bash
 python3 server.py --insecure
 ```
+
 - **`--insecure`** → Runs without HTTPS (useful for testing).  
 - You should see **Caldera starting up** with logs printing.
+
+The terminal window will not go back to the prompt as you did not run the server in the background.
 
 ---
 
 ## **5️⃣ Access the Caldera Web UI**
 Once the server is running, open your browser and go to:  
+
 ```
 http://localhost:8888
 ```
+
+Please use Firefox!
+
 🔑 **Default Login Credentials:**  
-- **Username:** `red`  
+- **Username:** `admin`  or `red`
 - **Password:** `admin`  
 
 ---
 
 ## **6️⃣ Create a Client (Agent)**
+Now comes the part where you use Caldera to create an Agent.  This agent is a piece of malware.  You will need to implant it on the victim machine!
+
 From the Caldera UI:  
+
 - Go to **Agents → Generate Agent**  
 - Choose **Sandcat (Go)** for macOS/Linux  
-- **Set the callback address**:  
+- **Set the callback address**:
+-   
   ```plaintext
   192.168.X.X:8888
   ```
-  (Replace `192.168.X.X` with your **Mac’s private IP**—next step will explain how to find it.)  
+  (Replace `192.168.X.X` with your **machine's private IP** — next step will explain how to find it.)  
 
-- **Download the agent**.
+- **Download the agent to your machine.**. What this means is literally open nano, name the file sandcat, and copy and paste the agent code into it.  Your professor will step you though this step.  This is the part where you **imagine** someone has clicked a link and downloaded some malware!
 
 ---
 
-## **7️⃣ Find Your Mac’s IP Address**
-Run this command to get your **local (private) IP address**:  
+## **7️⃣ Find Your Machine’s IP Address**
+Run this command to get your **local (private) IP address**: 
+ 
 ```bash
-ifconfig | grep "inet " | grep -v 127.0.0.1
+ifconfig | grep "inet " 
 ```
 🔹 Look for an IP like `192.168.1.238`—this is your **local network IP**.  
 👉 **Use this IP as the callback address when creating the client!**  
@@ -130,24 +156,31 @@ ifconfig | grep "inet " | grep -v 127.0.0.1
 
 ## **8️⃣ Copy & Start the Client**
 Once you have downloaded the client, make it **executable**:  
+
 ```bash
 chmod +x sandcat
 ```
+
 Then, **run it**:  
 ```bash
 ./sandcat
 ```
-After running it, **check the Caldera UI** → You should see the agent check in under **Agents**.
+
+After running it, **check the Caldera UI** → You should see the agent check in under **Agents**.  That is, head back to Firefox and click on Agents.  You agent will show up - wait for it!
 
 ---
 
 ## **9️⃣ Hiding the Agent (Stealth Mode)**
-You can "hide" the agent by:  
+Note, if you wanted to you can "hide" the agent to make this more realistic. You could simply issue these commands:
+  
 - Running it **in the background**:  
+
   ```bash
   nohup ./sandcat &> /dev/null &
   ```
+
 - Renaming it to look **less suspicious**:  
+
   ```bash
   mv sandcat mac-update
   ./mac-update &
@@ -172,22 +205,4 @@ Now, let’s have **students install my custom client** so I can peek into their
 - Have students **run it "for testing purposes"**.  
 - Maintain persistent access. 🚀  
 
----
-
-### 🎯 **Final Summary**
-| **Step** | **Command / Action** |
-|----------|---------------------|
-| **Pull Caldera** | `docker pull mitre/caldera` |
-| **Start Server** | `docker run -d --name caldera -p 8888:8888 mitre/caldera` |
-| **Bash into Container** | `docker exec -it caldera /bin/bash` |
-| **Start Server in Container** | `python3 server.py --insecure` |
-| **Find Mac’s IP** | `ifconfig | grep "inet " | grep -v 127.0.0.1` |
-| **Generate Agent** | Use **Mac IP** as callback (`192.168.X.X:8888`) |
-| **Run Agent** | `chmod +x sandcat && ./sandcat` |
-| **Hide Agent** | `nohup ./sandcat &> /dev/null &` |
-| **Run Nosy Neighbor** | In **Caldera UI** under **Operations** |
-
----
-
-🔥 **Now You’re in Control!** 🔥  
-Let me know if you need to tweak anything. This is gonna be fun! 😈🎉
+We know from last week that we can find the IP addresses of other machines in the classroom.  If you could so kindly install my client - I'll happily look around your machine!
