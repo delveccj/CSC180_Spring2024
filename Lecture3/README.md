@@ -5,7 +5,7 @@ Last week we learned about the outsider threat.  This is when an attacker probes
 The second way networks become compromised is from the inside.  This can happen a variety of ways:
 
 1. **Phishing Attack** - An email is sent to specific company employees. It contains information or content of interest to them.  It also includes a link, or an attachments.  The unsuspecting employee "clicks the link".  The malware then begins the process of installing itself.
-2. **Supply Chain** - A comapnies IT department or a consumer installs a legitimate product.  The entire world views this product as safe.  However, someone in the supply chain (i.e. the softwares developers, a 3rd party libray included by the software, or the site that delivers the software) adds malware to the seemingly safe hardware.  Does anyone want to guess why this happens?
+2. **Supply Chain** - A comapany's IT department or a consumer installs a legitimate product.  The entire world views this product as safe.  However, someone in the supply chain (i.e. the softwares developers, a 3rd party libray included by the software, or the site that delivers the software) adds malware to the seemingly safe hardware.  Does anyone want to guess why this happens?
 3. **Insider Threat** - This is similar to the Supply Chain above.  In this case, a company has an employee who literally installs malware.  Whether for financial gain or out of spite.
 
 In this case the malware does not exist in a vaccuum.  It attempts to reach out over the internet to a command and control server.  This server is run by the folks who implanted the malware.  Once it makes a connection to the mothership, so to speak, life becomes very hard for the company or individual who has been infected by the malware.
