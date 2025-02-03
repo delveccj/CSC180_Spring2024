@@ -39,7 +39,7 @@ When you get the server running, you will see an interface like this to control 
 ---
 
 ## **1️⃣ Pull the Caldera Docker Container**  
-We learned about containers a few weeks back.  It is the way software engineering is performed in 2025.  There is, of course, a container for Calder.  It is found here:
+We learned about containers a few weeks back.  It is the way software engineering is performed in 2025.  There is, of course, a container for Caldera.  It is found here:
 
 [](https://hub.docker.com/r/mitre/caldera)
 
