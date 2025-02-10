@@ -1,19 +1,19 @@
 ## Lab 4: Let's Exploit a Vulnerable Container! ##
 
-The beauty of containers is that you can configure them to be whatever you want.  From the most secure operating system ever to one fraught with vulnerabilities.  Today, we are going to download a vulnerable container.  It is called Juice Shop and was made vulnerable on purpose - so that folks like you and I may learn or practice our skills.
+The beauty of containers is that you can configure them to be whatever you want.  From the most secure operating system ever to one fraught with vulnerabilities.  Today, we are going to download a vulnerable container.  It is called Juice Shop and was made vulnerable on purpose - so that folks like you and I may learn or practice our skills.  Its perfect for CTF practice!
 
 Here is a link to Juice Shop:
 
 [Juice Shop](https://github.com/juice-shop/juice-shop)
 
-You can always attemtp to install things from scratch - but containers make life so easy.  Here is the URL for a popular Juice Shop container (there is no official release - more on that in a second).
+You can always attempt to install things from scratch - but containers make life so easy.  Here is the URL for a popular Juice Shop container (there is no official release - more on that in a second).
 
 [Docker Hub Juice Shop Container](https://hub.docker.com/r/bkimminich/juice-shop)
 
-If we search DockerHub - we find there are other Juice Shop containers.  Do we trust em', should we trust em'.  It all depends - but more than likely we shold **not** trust them.
+If we search DockerHub - we find there are other Juice Shop containers.  Do we trust em', should we trust em'?  It all depends - but more than likely we should **not** trust them.
 
 ### Checking Trust of a Container ###
-Ok, this a is a bit outside of a capture the flag exercise.  But it is important to know and consider.  And it actually can easily be applied to a capture the flag exercise.  We are about to pull the Juice Shop container.  Once we have it - how do we know it itself is not running malware?  Maybe its a bait and switch situation where the maker of the container advertises it as an easy way to install Metaspoitable 2 but has then loaded it with malware.  Lets find out what happens.  First, pull the container - like so:
+Ok, this a is a bit outside of a capture the flag exercise.  But it is important to know and consider.  It actually can easily be applied to a capture the flag exercise.  We are about to pull the Juice Shop container.  Once we have it - how do we know it itself is not running malware?  Maybe its a bait and switch situation where the maker of the container advertises it as an easy way to install Juice Shop but has then loaded it with malware.  Let's find out what happens.  First, pull the container - like so:
 
 ```bash
 docker pull bkimminich/juice-shop
@@ -54,16 +54,35 @@ We would need to ssh into the container, use ```apt``` to update, and then insta
 
 ## What Is Juice Shop?##
 
-It is the most advanced and (probably) trustworthy open source pen testing application avaiable.  There is a lot to it.  Let's review the official documentation here:
+It is the most advanced and (probably) trustworthy open source pen testing applications avaiable.  There is a lot to it.  Let's review the official documentation here:
 
 [Juice Shop Manual](https://pwning.owasp-juice.shop/companion-guide/latest/part1/happy-path.html)
 
 Let's review Part 1: Hacking preparations together.  Note, we cannot access the Score Board as yet - that is part of our first challenge!
 
+Before we move on - we should install a tool to help us out.  In this task and in the future (it will help understand this week's picoCTF).  Install Wireshark.  Who knows what Wireshark is used for?
+
+```bash
+sudo apt update
+sudo apt install wireshark -y
+```
+
+To run Wireshark - use `sudo`.  Otherwise it will not capture the packets.  Once it is started, let's explore what it is doing!
+
+For our assignment today we will want to choose the loopback adapter:
+
+![](loopback.png)
+
+We will also want to filter results to only capture port 3000.  With this filter in the filter bar at top:
+
+```bash
+tcp.port == 3000
+```
+
 
 ## Challenge 1.  Find the Score Board
 
-Let's scan the container. First, we need to start our container.  Run Juice Shop like so:
+Let's find that socreboard! First, we need to start our container.  Run Juice Shop like so:
 
 ```bash
 docker run --rm -p 3000:3000 bkimminich/juice-shop
@@ -71,7 +90,9 @@ docker run --rm -p 3000:3000 bkimminich/juice-shop
 
 Note - we have run it interactively.  The container will start and will basically take over the console.  You need to open another tab and access a fresh console.  If we wanted to - we could easily run this as a background process.
 
-Now - we *cheat* just a little here.  We do not scan the container - only because it takes a long time to reply.  Rather, we scan localhost which finds the ports that were punched through between the container and your machine.  
+Remeber to start recording with Wireshark!
+
+Now - we *cheat* just a little here.  We do not scan the container - only because it takes a long time for the container itself to reply.  Rather, we scan localhost which finds the ports that were punched through between the container and your machine.  Hopefully that makes sense!
 
 Issue the following command and watch the information flow back:
 
@@ -118,7 +139,7 @@ This method uses **`wget` to crawl the website** and **`grep` to extract words n
 - It **saves pages locally**, so we can **search them for hidden clues**.
 - It **works even if pages aren’t visible in the UI**.
 
-** Step 2: Use `wget` to Download the Entire Website**
+**Step 2: Use `wget` to Download the Entire Website**
 
 Run this command to **crawl Juice Shop** and save **all accessible pages**:
 ```bash
@@ -134,7 +155,6 @@ wget -r -l 2 -np -k http://localhost:3000
 
 This saves files in a folder named `localhost:3000/`.
 
----
 
 **Step 3: Use `grep` to Find the Scoreboard Reference**
 
@@ -147,9 +167,9 @@ grep -o -E '.{0,20}score.{0,20}' localhost:3000/*
 | **Command** | **What It Does?** |
 |------------|------------------|
 | `grep` | Searches for text inside files |
-| `-o` | Shows **only matching words**, not the full line |
-| `-E` | Enables **extended regex** |
-| `.{0,20}score.{0,20}` | **Shows up to 20 characters before and after "score"** |
+| `-o` | Shows only matching words, not the full line |
+| `-E` | Enables extended regex |
+| `.{0,20}score.{0,20}` | Shows up to 20 characters before and after "score" |
 
 **Example Output:**
 
@@ -158,16 +178,22 @@ grep -o -E '.{0,20}score.{0,20}' localhost:3000/*
 ... user highest score is 3200 ...
 ... API endpoint for score-board ...
 ```
-**Now you have the exact URL (probably `/score-board`)!** 
+**Now you know the exact URL (probably `/score-board`)** 
 
 Try opening the suspected page in Firefox - what happens?
 
 ```bash
+http://localhost:3000/score-board
+```
+No dice with this one.  Ok, but there is that `#` in the initial URL.  What if it we try it that way.
+
+```bash
 http://localhost:3000/#/score-board
 ```
+It works!!!
 
-### Simulating Realism 
-Ok, so what have we got here.  A set of directions that gave us the hint to find the ```score-board``` page.  However, its not really a separate page.  **`http://localhost/#/score-board`** is not a real page in the traditional sense. Instead, it uses hash-based routing to load the Scoreboard without making a new request to the server.
+## Simulating Realism ##
+Ok, so what have we got here.  A set of directions that gave us the hint to find the ```score-board``` page.  However, its not a separate page.  **`http://localhost/#/score-board`** is not a real page in the traditional sense. Instead, it uses hash-based routing to load the Scoreboard without making a new request to the server.
 
 **What is `/#/score-board` Doing?**
 
@@ -178,17 +204,18 @@ Ok, so what have we got here.  A set of directions that gave us the hint to find
 **How It Works in Juice Shop**
 
 1️⃣ You visit `http://localhost:3000/`.  
-2️⃣ The browser loads **one HTML file (`index.html`) and JavaScript**.  
+2️⃣ The browser loads one HTML file (`index.html`) and JavaScript.  
 3️⃣ When you navigate to `http://localhost/#/score-board`, JavaScript detects the `#/score-board` part and:
 
    - **Finds the correct route in Angular’s router**.
    - **Loads the Scoreboard view dynamically**.
    - **Updates the page content without a full reload**.
 
-This means `/score-board` doesn’t exist as an actual backend route!** Instead, it's just a state change inside the frontend framework.
+This means `/score-board` doesn’t exist as an actual backend route! Instead, it's just a state change inside the frontend framework.
 
 
 **How to Find the JavaScript Controlling This?**
+
 Let's go to the developer tools within Firefox on the Juice Shop landing page.  We see the following:
 
 ![](dev_tools.png)
