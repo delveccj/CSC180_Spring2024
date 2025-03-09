@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: web_server
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - lockdown_net
+
+  db:
+    image: mysql:5.7
+    container_name: mysql_server
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tickitnow
+      MYSQL_USER: tickit
+      MYSQL_PASSWORD: tickitpass
+    ports:
+      - "3306:3306"
+    networks:
+      - lockdown_net
+
+  ftp:
+    build: .
+    container_name: ftp_server
+    ports:
+      - "21:21"
+    networks:
+      - lockdown_net
+
+networks:
+  lockdown_net:
+    driver: bridge
+
