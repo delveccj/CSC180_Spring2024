@@ -216,10 +216,6 @@ This **creates a custom Linux server image** for our web and FTP services.
 
 ---
 
-That’s a **great** observation! The Dockerfile **installs multiple services on one container**, but in Docker Compose, each **service runs in its own container with its own IP address**. So how does that work? 🤔  
-
----
-
 ## **🔍 The Magic of Docker Networking**
 Docker uses **virtual networking** to give containers their **own unique IP addresses**, even though they run on the same physical machine (your computer).
 
@@ -340,7 +336,8 @@ I can't directly draw images here, but I can **create an ASCII diagram** that vi
 Would this make sense for your students? Let me know if you'd like an even simpler version! 🚀
 ### **🔍 What This Command Does?**
 The command:  
-```sh
+
+```
 docker network inspect lockdown_lockdown_net
 ```
 **Asks Docker to show details about the network** named `lockdown_lockdown_net`. This is a **virtual network** that Docker created to allow the different containers (services like the web server, database, and FTP server) to communicate with each other.
@@ -505,3 +502,80 @@ mysql -h 192.168.1.105 -P 3306 -u root -p
 (Use the new password when prompted.)
 
 ---
+
+### **Step 5: Houston We Have a Problem** 
+Even if you, as the protector, **change the root password**, any **already connected user** will **still have access** **until** they disconnect! This is a **huge security risk** because an attacker **can stay inside** the database session **even after their credentials are changed**.  
+
+### **🔍 How to Monitor Active Connections to the MySQL Database**
+You need to:
+1. **List active connections** (to see who is connected).  
+2. **Kick out attackers** (forcefully close their session).  
+
+---
+
+## **📌 Step 1: Check Active Connections**
+To login to your local MySQL server (the one running in your container) - you need to issue this command:
+
+```sh
+mysql -h 127.0.0.1 -P 3306 -u root -p
+
+```
+
+Once you are inside MySQL, run this:  
+```sql
+SHOW PROCESSLIST;
+```
+This will display **who is connected** and what they’re doing.  
+
+### **🔍 Example Output**
+| Id  | User  | Host          | DB         | Command | Time | State      | Info  |
+|-----|-------|--------------|------------|---------|------|------------|-------|
+| 101 | root  | 192.168.1.110 | tickitnow  | Query   | 12   | Sleeping   | NULL  |
+| 102 | root  | 192.168.1.105 | tickitnow  | Query   | 5    | Executing  | SELECT * FROM users;  |
+| 103 | tickit | 172.19.0.4   | tickitnow  | Query   | 3    | Running    | INSERT INTO tickets VALUES... |
+
+💡 **What this tells us:**  
+- Someone from **192.168.1.110** (another student) is **connected as root**.  
+- Someone from **192.168.1.105** is running a **query to dump user data** (possible hacker).  
+- A **container (172.19.0.4)** is using the `tickit` user for normal operations.
+
+---
+
+## **📌 Step 2: Kill a Suspicious Connection**
+If you see an **unwanted user still inside the database**, **kick them out**! 🚪💥  
+
+1. Find their **process ID (`Id` column)** from `SHOW PROCESSLIST;`.  
+2. Kill their session:
+   ```sql
+   KILL 102;
+   ```
+   (Replace `102` with the actual **Id** of the suspicious connection.)  
+
+💡 **Now they are forcefully disconnected!** If they try to reconnect, they’ll need the **new password**—but **they don’t know it anymore!**  
+
+---
+
+## **📌 Step 3: Apply Security Fixes**
+After kicking them out, **prevent future intrusions** by:
+1. **Immediately changing the root password (again)**
+   ```sql
+   ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'UltraSecureP@ss!';
+   FLUSH PRIVILEGES;
+   ```
+2. **Restrict remote access to MySQL** so only `localhost` can connect:
+   ```sql
+   ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'SuperSecure123!';
+   CREATE USER 'root'@'localhost' IDENTIFIED BY 'LocalOnlyPass!';
+   FLUSH PRIVILEGES;
+   ```
+   Now, **only connections from the local machine** (Docker container) will work.  
+
+---
+
+## **📌 Bonus: Monitor Active Users in Real-Time**
+Instead of manually running `SHOW PROCESSLIST;`, you can **watch connections live** using this command:
+```sh
+watch -n 2 "docker exec -it mysql_server mysql -uroot -p'yourpassword' -e 'SHOW PROCESSLIST;'"
+```
+---
+
