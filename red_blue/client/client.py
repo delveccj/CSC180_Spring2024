@@ -5,7 +5,7 @@ import mysql.connector
 import socket
 import subprocess
 
-SERVER_URL = "http://138.92.51.104:5001/update"
+SERVER_URL = "http://instructor.ip.address.here/update"
 TEAM_NAME = socket.gethostname()
 
 def mysql_up():
