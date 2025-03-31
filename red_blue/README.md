@@ -1,13 +1,3 @@
-Absolutely! Here's your **fully updated `README.md`**, polished and ready to drop in 🚀 — including:
-
-- Setup instructions for students
-- Updated architecture with SSH check
-- Space cleanup tips
-- All new features you've added
-
----
-
-```markdown
 # 🛡️ MySQL Security Visibility Lab
 
 A Docker-based security visibility lab where students run intentionally misconfigured MySQL containers that report their status to an instructor-run dashboard.
@@ -21,9 +11,8 @@ Follow these steps to get your client running!
 ### 1️⃣ Clone the Repo
 
 ```bash
-git clone https://github.com/your-org/mysql-visibility-lab.git
-cd mysql-visibility-lab/client
-```
+git clone https://github.com/delveccj/CSC180_Spring2024.git
+cd CSC180/CSC180_Spring2024/red_blue/client
 
 ### 2️⃣ Edit Your Configuration
 
