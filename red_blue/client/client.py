@@ -55,7 +55,7 @@ def is_ssh_open():
     try:
         # Attempt to connect to port 2222 on the mysql container
         mysql_ip = socket.gethostbyname("mysql")
-        sock = socket.create_connection((mysql_ip, 2222), timeout=2)
+        sock = socket.create_connection((mysql_ip, 22), timeout=2)
         sock.close()
         return True
     except:
