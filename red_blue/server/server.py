@@ -11,16 +11,18 @@ def dashboard():
 @app.route('/update', methods=['POST'])
 def update():
     data = request.json
-    team = data.get('team') or request.remote_addr
+    client_ip = request.remote_addr
+    team = data.get('team') or client_ip
 
     status_map[team] = {
         "mysql_up": data.get("mysql_up"),
         "remote_connections": data.get("remote_connections"),
         "ssh_open": data.get("ssh_open"),
-        "timestamp": time.strftime('%H:%M:%S')
+        "timestamp": time.strftime('%H:%M:%S'),
+        "ip_address": client_ip  # 💡 Store IP here
     }
 
-    print(f"✅ Received update from {team}: {status_map[team]}")
+    print(f"✅ Received update from {team} ({client_ip}): {status_map[team]}")
     return 'OK', 200
 
 if __name__ == '__main__':

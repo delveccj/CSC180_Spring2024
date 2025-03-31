@@ -1,9 +1,106 @@
-## 🚧 The Mission
-- 🧑‍🏫 **You (Teacher)**: Run the **Web Server Dashboard**
-- 🧑‍🎓 **Students**: Run Dockerized **client agents** that:
-  - Check if MySQL is running ✅
-  - Check if it has **remote connections** 🔍
-  - Report their status back to your server every 30 seconds
+Absolutely! Here's your **fully updated `README.md`**, polished and ready to drop in 🚀 — including:
+
+- Setup instructions for students
+- Updated architecture with SSH check
+- Space cleanup tips
+- All new features you've added
+
+---
+
+```markdown
+# 🛡️ MySQL Security Visibility Lab
+
+A Docker-based security visibility lab where students run intentionally misconfigured MySQL containers that report their status to an instructor-run dashboard.
+
+---
+
+## 🚀 Quick Start for Students
+
+Follow these steps to get your client running!
+
+### 1️⃣ Clone the Repo
+
+```bash
+git clone https://github.com/your-org/mysql-visibility-lab.git
+cd mysql-visibility-lab/client
+```
+
+### 2️⃣ Edit Your Configuration
+
+Open `config.json` and update it with:
+
+- Your instructor’s IP address
+- Your team name
+
+```json
+{
+  "instructor_ip": "192.168.1.100",
+  "instructor_port": 5001,
+  "team_name": "Team_Alpha"
+}
+```
+
+> 💡 This tells your client where to send status updates.
+
+---
+
+### 3️⃣ Build the Client Stack
+
+```bash
+docker-compose build
+```
+
+### 4️⃣ Run the Client Stack
+
+```bash
+docker-compose up
+```
+
+Watch your client log output — it will send status every 30 seconds.
+
+---
+
+### 5️⃣ Shut It Down When You're Done
+
+```bash
+docker-compose down
+```
+
+This stops and removes your containers.
+
+---
+
+## 📦 Space Check & Cleanup
+
+Docker can take up a lot of disk space! Here's how to check and clean up.
+
+### Check Disk Usage
+
+```bash
+df -h
+```
+
+Look at the `/` or `/var/lib/docker` mount to see free space.
+
+### Clean Up Docker Stuff
+
+**Remove stopped containers, old networks, build cache, and dangling images:**
+
+```bash
+docker system prune -f
+```
+
+**Remove all unused images (frees up lots of space):**
+
+```bash
+docker image prune -a -f
+```
+
+**Remove unused volumes (optional):**
+
+```bash
+docker volume prune -f
+```
 
 ---
 
@@ -11,216 +108,100 @@
 
 ```plaintext
           🧑‍🏫 Instructor Machine (Server with UI)
-              ┌────────────────────────────┐
-              │ Web UI: Shows all clients  │
-              │ Status: MySQL ✔ | Remote ✔ │
-              └────────────────────────────┘
-                      ▲            ▲
-               JSON POSTs     every 30 sec
-                      ▲            ▲
-    ┌─────────────────┴────────────┴────────────┐
-    │                                           │
- 🧑‍🎓 Student A (Client)              🧑‍🎓 Student B (Client)
- [Docker Compose Stack]              [Docker Compose Stack]
- ┌────────────┐                      ┌────────────┐
- │ mysql      │                      │ mysql      │
- │ client.py  │ → sends status       │ client.py  │ → sends status
- └────────────┘                      └────────────┘
+              ┌────────────────────────────────────────┐
+              │ Web UI: Shows all clients' status live │
+              │ Status: MySQL ✔ | Remote ✔ | SSH ✔      │
+              └────────────────────────────────────────┘
+                      ▲             ▲             ▲
+               JSON POSTs     every 30 sec    From each client
+                      ▲             ▲
+    ┌─────────────────┴─────────────┴────────────────────┐
+    │                                                    │
+ 🧑‍🎓 Student A                                 🧑‍🎓 Student B
+ ┌──────────────┐                            ┌──────────────┐
+ │ mysql        │  ← exposed port 3306       │ mysql        │
+ │ ssh (port 22)│  ← insecure access         │ ssh (port 22)│
+ │ client.py    │  → reports status          │ client.py    │
+ └──────────────┘                            └──────────────┘
 ```
 
 ---
 
-## ✅ The Components
+## ✅ What the Client Reports
 
-### 🖥️ **Instructor Dashboard (Server)**
-- Python + Flask for the backend
-- HTML + JavaScript for the live UI
-- Receives POSTs from each student’s client:
-  ```json
-  {
-    "team": "Team A",
-    "mysql_up": true,
-    "remote_connections": true
-  }
-  ```
+Each student’s client sends:
 
-### 🐳 **Student Docker Compose Stack**
-Contains:
-- MySQL with intentionally bad security
-- A `client.py` script that:
-  - Pings `localhost:3306` to see if MySQL is up
-  - Parses `SHOW PROCESSLIST` or `netstat` to see if remote IPs are connected
-  - Sends that data to your Flask server every 30 seconds
+```json
+{
+  "team": "Team_Alpha",
+  "mysql_up": true,
+  "remote_connections": true,
+  "ssh_open": true
+}
+```
+
+- ✅ `mysql_up`: Is MySQL responding locally?
+- 🔍 `remote_connections`: Are non-local IPs connected?
+- 🔓 `ssh_open`: Is port 22 reachable (remote SSH access)?
 
 ---
 
-## 🧱 Step-by-Step Build Plan
+## 📊 The Dashboard
 
-### 1️⃣ Instructor: Flask Server with Live Dashboard
+The instructor runs a Flask server that displays a live table showing:
 
-**server.py**
-```python
-from flask import Flask, request, render_template
-import time
+| Team        | IP Address     | MySQL Status | Remote Conn | SSH Status | Last Update |
+|-------------|----------------|--------------|--------------|-------------|--------------|
+| Team_Alpha  | 10.0.0.42      | 🟢 UP         | 🔴 REMOTE     | 🔴 EXPOSED   | 12:31:47     |
 
-app = Flask(__name__)
-status_map = {}
+- **Green** = Secure
+- **Red** = Vulnerable or exposed
+- Auto-refreshes every 5 seconds
 
-@app.route('/')
-def dashboard():
-    return render_template('dashboard.html', status=status_map, time=time.time())
+---
 
-@app.route('/update', methods=['POST'])
-def update():
-    data = request.json
-    team = data.get('team')
-    status_map[team] = {
-        "mysql_up": data.get("mysql_up"),
-        "remote_connections": data.get("remote_connections"),
-        "timestamp": time.strftime('%H:%M:%S')
-    }
-    return 'OK', 200
+## 🧠 Learning Goals
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+Students learn to:
+
+- Use Docker Compose to build real service stacks
+- Understand how internal services get exposed externally
+- Identify when a system is vulnerable to remote MySQL or SSH access
+- Monitor service health, remote access, and attacker visibility
+
+---
+
+## 💡 Bonus Ideas for Extension
+
+- Add attacker containers to probe open ports
+- Capture `.bash_history` or leave flags in `/root/flag.txt`
+- Introduce logging and alerting
+- Gamify it with scoring
+
+---
+
+## 🧼 Reminder for Students
+
+Before you leave, run:
+
+```bash
+docker-compose down
+docker system prune -f
 ```
 
-**templates/dashboard.html**
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="refresh" content="5">
-    <style>
-        .green { background-color: #c8f7c5; }
-        .red { background-color: #f7c5c5; }
-        table, th, td { border: 1px solid black; padding: 8px; }
-    </style>
-</head>
-<body>
-    <h1>MySQL Service Status Dashboard</h1>
-    <table>
-        <tr><th>Team</th><th>MySQL</th><th>Remote Conn</th><th>Last Update</th></tr>
-        {% for team, stat in status.items() %}
-        <tr>
-            <td>{{ team }}</td>
-            <td class="{{ 'green' if stat.mysql_up else 'red' }}">{{ 'UP' if stat.mysql_up else 'DOWN' }}</td>
-            <td class="{{ 'green' if not stat.remote_connections else 'red' }}">{{ 'CLEAN' if not stat.remote_connections else 'REMOTE' }}</td>
-            <td>{{ stat.timestamp }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
+And double-check disk usage with:
+
+```bash
+df -h
+```
+
+Keep your machine clean — just like your MySQL configs 😄
+
+---
+
+Built with ☕, 🐳, and a healthy dose of red vs green flags.
 ```
 
 ---
 
-### 2️⃣ Students: Docker Compose + Client
-
-**docker-compose.yml**
-```yaml
-version: '3'
-services:
-  mysql:
-    image: mysql:5.7
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    ports:
-      - "3306:3306"
-
-  client:
-    build: ./client
-    depends_on:
-      - mysql
-```
-
-**client/Dockerfile**
-```dockerfile
-FROM python:3.9
-COPY client.py .
-RUN pip install requests mysql-connector-python
-CMD ["python", "client.py"]
-```
-
-**client/client.py**
-```python
-import time
-import requests
-import mysql.connector
-import socket
-import subprocess
-
-SERVER_URL = "http://<teacher-ip>:5000/update"
-TEAM_NAME = socket.gethostname()
-
-def mysql_up():
-    try:
-        conn = mysql.connector.connect(
-            host="mysql",
-            user="root",
-            password="root",
-            connection_timeout=2
-        )
-        conn.close()
-        return True
-    except:
-        return False
-
-def has_remote_connections():
-    try:
-        output = subprocess.check_output(
-            "netstat -an | grep :3306 | grep ESTABLISHED", shell=True
-        ).decode()
-        for line in output.splitlines():
-            if not "127.0.0.1" in line:
-                return True
-        return False
-    except:
-        return False
-
-while True:
-    payload = {
-        "team": TEAM_NAME,
-        "mysql_up": mysql_up(),
-        "remote_connections": has_remote_connections()
-    }
-    try:
-        requests.post(SERVER_URL, json=payload, timeout=2)
-    except:
-        pass
-    time.sleep(30)
-```
-
----
-
-## 🧪 What the Students Do
-1. Build and run:
-   ```bash
-   docker-compose up --build -d
-   ```
-2. Their container stack:
-   - Runs a **vulnerable MySQL server**
-   - Periodically checks status and **reports back to your instructor dashboard**
-
----
-
-## 🧠 What This Teaches Students
-- Using Docker Compose to orchestrate services
-- Inter-container communication (client talks to MySQL)
-- Basic service health monitoring
-- Network awareness: remote vs. local connections
-- **Security visibility**: “Oops! Why is someone connected to my DB!?”
-
----
-
-## 🏁 At a Glance in Class
-From your dashboard:
-- 🔴 Red = MySQL is down or exposed
-- 🟢 Green = Healthy, locked-down service
-- You can **watch in real time** as students:
-  - Misconfigure things
-  - Get breached
-  - Fix and defend
-
----
+Let me know if you want a version of this with markdown badges, or if you want to auto-detect instructor IP from an env var or script. But this version is clean, accurate, and reflects **everything you've built today.** 🏁
