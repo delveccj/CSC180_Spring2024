@@ -19,8 +19,10 @@ def load_config():
 config = load_config()
 
 INSTRUCTOR_IP = config.get("instructor_ip", "127.0.0.1")
-SERVER_URL = f"http://{INSTRUCTOR_IP}:5000/update"
+INSTRUCTOR_PORT = config.get("instructor_port", 5000)
 TEAM_NAME = config.get("team_name", socket.gethostname())
+
+SERVER_URL = f"http://{INSTRUCTOR_IP}:{INSTRUCTOR_PORT}/update"
 
 def mysql_up():
     try:
