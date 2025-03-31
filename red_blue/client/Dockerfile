@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     && apt-get clean
 
+COPY config.json .
 COPY client.py .
 RUN pip install requests mysql-connector-python
 
