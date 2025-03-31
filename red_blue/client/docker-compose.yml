@@ -1,15 +1,17 @@
 version: '3'
 services:
   mysql:
-    image: mysql:8.0
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: test_db
       MYSQL_USER: test_user
       MYSQL_PASSWORD: test_password
-    command: --default-authentication-plugin=mysql_native_password
     ports:
       - "3306:3306"
+      - "2222:22"   # SSH exposed on port 2222
 
   client:
     build: .
