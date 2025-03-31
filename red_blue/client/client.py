@@ -1,12 +1,26 @@
-#138.92.51.104
 import time
 import requests
 import mysql.connector
 import socket
 import subprocess
+import json
 
-SERVER_URL = "http://instructor.ip.address.here/update"
-TEAM_NAME = socket.gethostname()
+# Load config
+CONFIG_FILE = "config.json"
+
+def load_config():
+    try:
+        with open(CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error reading config file: {e}")
+        return {}
+
+config = load_config()
+
+INSTRUCTOR_IP = config.get("instructor_ip", "127.0.0.1")
+SERVER_URL = f"http://{INSTRUCTOR_IP}:5000/update"
+TEAM_NAME = config.get("team_name", socket.gethostname())
 
 def mysql_up():
     try:
@@ -44,4 +58,3 @@ while True:
     except:
         pass
     time.sleep(30)
-
