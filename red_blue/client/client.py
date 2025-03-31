@@ -55,8 +55,15 @@ while True:
         "mysql_up": mysql_up(),
         "remote_connections": has_remote_connections()
     }
+
+    print("\n📡 Sending payload to instructor...")
+    print(f"Destination: {SERVER_URL}")
+    print(f"Payload: {payload}")
+
     try:
-        requests.post(SERVER_URL, json=payload, timeout=2)
-    except:
-        pass
+        response = requests.post(SERVER_URL, json=payload, timeout=2)
+        print(f"✅ Sent! Server responded with status {response.status_code}")
+    except Exception as e:
+        print(f"❌ Failed to send payload: {e}")
+
     time.sleep(30)
