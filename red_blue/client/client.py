@@ -37,16 +37,27 @@ def mysql_up():
     except:
         return False
 
+import mysql.connector
+import socket
+
 def has_remote_connections():
     try:
-        output = subprocess.check_output(
-            "netstat -an | grep :3306 | grep ESTABLISHED", shell=True
-        ).decode()
-        for line in output.splitlines():
-            if not "127.0.0.1" in line:
-                return True
-        return False
+        # Attempt to connect using the container's external-looking IP address
+        # (simulate a "remote" connection from within)
+        mysql_ip = socket.gethostbyname("mysql")
+        
+        conn = mysql.connector.connect(
+            host=mysql_ip,
+            user="root",
+            password="root",
+            connection_timeout=2
+        )
+        conn.close()
+        
+        # If this succeeds, then remote connections are allowed
+        return True
     except:
+        # If connection is refused or times out, remote access is likely blocked
         return False
 
 while True:
