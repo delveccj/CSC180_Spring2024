@@ -24,9 +24,9 @@ Open `config.json` and update it with:
 
 ```json
 {
-  "instructor_ip": "192.168.1.100",
+  "instructor_ip": "192.168.1.104",
   "instructor_port": 5001,
-  "team_name": "Team_Alpha"
+  "team_name": "YOUR_NAME_HERE"
 }
 ```
 
