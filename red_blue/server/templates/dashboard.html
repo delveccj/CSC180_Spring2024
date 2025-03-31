@@ -26,6 +26,7 @@
             <th>Team</th>
             <th>MySQL</th>
             <th>Remote Conn</th>
+            <th>SSH Exposed</th>
             <th>Last Update</th>
         </tr>
         {% for team, stat in status.items() %}
@@ -35,7 +36,10 @@
                 {{ 'UP' if stat.mysql_up else 'DOWN' }}
             </td>
             <td class="{{ 'green' if not stat.remote_connections else 'red' }}">
-                {{ 'CLEAN' if not stat.remote_connections else 'MYSQL ACCEPTS REMOTE CONNECTIONS' }}
+                {{ 'CLEAN' if not stat.remote_connections else 'REMOTE' }}
+            </td>
+            <td class="{{ 'green' if not stat.ssh_open else 'red' }}">
+                {{ 'LOCKED' if not stat.ssh_open else 'EXPOSED' }}
             </td>
             <td>{{ stat.timestamp }}</td>
         </tr>

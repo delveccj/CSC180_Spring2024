@@ -37,15 +37,9 @@ def mysql_up():
     except:
         return False
 
-import mysql.connector
-import socket
-
 def has_remote_connections():
     try:
-        # Attempt to connect using the container's external-looking IP address
-        # (simulate a "remote" connection from within)
         mysql_ip = socket.gethostbyname("mysql")
-        
         conn = mysql.connector.connect(
             host=mysql_ip,
             user="root",
@@ -53,18 +47,26 @@ def has_remote_connections():
             connection_timeout=2
         )
         conn.close()
-        
-        # If this succeeds, then remote connections are allowed
         return True
     except:
-        # If connection is refused or times out, remote access is likely blocked
+        return False
+
+def is_ssh_open():
+    try:
+        # Attempt to connect to port 2222 on the mysql container
+        mysql_ip = socket.gethostbyname("mysql")
+        sock = socket.create_connection((mysql_ip, 2222), timeout=2)
+        sock.close()
+        return True
+    except:
         return False
 
 while True:
     payload = {
         "team": TEAM_NAME,
         "mysql_up": mysql_up(),
-        "remote_connections": has_remote_connections()
+        "remote_connections": has_remote_connections(),
+        "ssh_open": is_ssh_open()
     }
 
     print("\n📡 Sending payload to instructor...")
