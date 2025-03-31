@@ -13,6 +13,7 @@ Follow these steps to get your client running!
 ```bash
 git clone https://github.com/delveccj/CSC180_Spring2024.git
 cd CSC180/CSC180_Spring2024/red_blue/client
+```
 
 ### 2️⃣ Edit Your Configuration
 
