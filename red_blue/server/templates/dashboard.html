@@ -3,24 +3,43 @@
 <head>
     <meta http-equiv="refresh" content="5">
     <style>
+        body {
+            font-family: sans-serif;
+        }
         .green { background-color: #c8f7c5; }
         .red { background-color: #f7c5c5; }
-        table, th, td { border: 1px solid black; padding: 8px; }
+        table, th, td {
+            border: 1px solid black;
+            padding: 8px;
+            border-collapse: collapse;
+            text-align: center;
+        }
+        th {
+            background-color: #eee;
+        }
     </style>
 </head>
 <body>
     <h1>MySQL Service Status Dashboard</h1>
-	<table>
-    		<tr><th>IP Address</th><th>MySQL</th><th>Remote Conn</th><th>Last Update</th></tr>
-    		{% for ip, stat in status.items() %}
-    		<tr>
-        		<td>{{ ip }}</td>
-        		<td class="{{ 'green' if stat.mysql_up else 'red' }}">{{ 'UP' if stat.mysql_up else 'DOWN' }}</td>
-        		<td class="{{ 'green' if not stat.remote_connections else 'red' }}">{{ 'CLEAN' if not stat.remote_connections else 'REMOTE' }}</td>
-        		<td>{{ stat.timestamp }}</td>
-    		</tr>
-    		{% endfor %}
-</table>
+    <table>
+        <tr>
+            <th>Team</th>
+            <th>MySQL</th>
+            <th>Remote Conn</th>
+            <th>Last Update</th>
+        </tr>
+        {% for team, stat in status.items() %}
+        <tr>
+            <td>{{ team }}</td>
+            <td class="{{ 'green' if stat.mysql_up else 'red' }}">
+                {{ 'UP' if stat.mysql_up else 'DOWN' }}
+            </td>
+            <td class="{{ 'green' if not stat.remote_connections else 'red' }}">
+                {{ 'CLEAN' if not stat.remote_connections else 'REMOTE' }}
+            </td>
+            <td>{{ stat.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 </body>
 </html>
-
