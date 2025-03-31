@@ -35,7 +35,7 @@
                 {{ 'UP' if stat.mysql_up else 'DOWN' }}
             </td>
             <td class="{{ 'green' if not stat.remote_connections else 'red' }}">
-                {{ 'CLEAN' if not stat.remote_connections else 'REMOTE' }}
+                {{ 'CLEAN' if not stat.remote_connections else 'MYSQL ACCEPTS REMOTE CONNECTIONS' }}
             </td>
             <td>{{ stat.timestamp }}</td>
         </tr>
