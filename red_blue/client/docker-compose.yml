@@ -17,4 +17,10 @@ services:
     build: .
     depends_on:
       - mysql
+  pyyaml-vuln:
+    build:
+      context: ./pyyaml-vuln
+    ports:
+      - "8989:8080"  # Web app exposed on port 8080
+    container_name: pyyaml-vulnerable
 

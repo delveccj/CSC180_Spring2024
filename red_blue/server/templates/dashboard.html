@@ -20,7 +20,7 @@
     </style>
 </head>
 <body>
-    <h1>MySQL Service Status Dashboard</h1>
+    <h1>Red/Blue Service Status Dashboard</h1>
     <table>
         <tr>
             <th>Team</th>
@@ -28,6 +28,7 @@
             <th>MySQL</th>
             <th>Remote Conn to MySQL DB</th>
             <th>SSH Exposed on mysql server</th>
+            <th>PyYAML RCE</th> <!-- ✅ New column -->
             <th>Last Update</th>
         </tr>
         {% for team, stat in status.items() %}
@@ -43,9 +44,13 @@
             <td class="{{ 'green' if not stat.ssh_open else 'red' }}">
                 {{ 'LOCKED' if not stat.ssh_open else 'EXPOSED' }}
             </td>
+            <td class="{{ 'red' if stat.pyyaml_rce else 'green' }}">
+                {{ '🚨 EXPLOITED' if stat.pyyaml_rce else '✅ SAFE' }}
+            </td>
             <td>{{ stat.timestamp }}</td>
         </tr>
         {% endfor %}
     </table>
 </body>
 </html>
+

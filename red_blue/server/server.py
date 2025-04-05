@@ -18,13 +18,17 @@ def update():
         "mysql_up": data.get("mysql_up"),
         "remote_connections": data.get("remote_connections"),
         "ssh_open": data.get("ssh_open"),
+        "pyyaml_rce": data.get("pyyaml_rce"),  # ✅ New: PyYAML vuln status
         "timestamp": time.strftime('%H:%M:%S'),
-        "ip_address": client_ip  # 💡 Store IP here
+        "ip_address": client_ip
     }
 
     print(f"✅ Received update from {team} ({client_ip}): {status_map[team]}")
+    print(f"📥 Raw incoming data from {request.remote_addr}: {request.data}")
+
     return 'OK', 200
 
 if __name__ == '__main__':
-    print("🚀 Instructor dashboard running on port 5001...")
-    app.run(host='0.0.0.0', port=5001)
+    print("🚀 Instructor dashboard running on port 5989...")
+    app.run(host='0.0.0.0', port=5989)
+

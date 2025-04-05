@@ -1,5 +1,5 @@
 {
-  "instructor_ip": "192.168.1.104",
-  "instructor_port": 5001,
+  "instructor_ip": "host.docker.internal",
+  "instructor_port": 5989,
   "team_name": "Team_Alpha"
 }
