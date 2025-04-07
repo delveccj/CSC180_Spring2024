@@ -3,9 +3,6 @@
 A Docker-based security visibility lab where students run intentionally misconfigured MySQL containers that report their status to an instructor-run dashboard.
 
 ---
-Absolutely — here's a clean, educational Python snippet you can share with your students that **demonstrates the core vulnerability (CVE-2017-18342)** and **how an attacker could exploit it**. It's short, clear, and safe to run in the controlled lab environment you've built.
-
----
 
 ### 🧠 **Educational Exploit Demo – PyYAML RCE Example**
 
