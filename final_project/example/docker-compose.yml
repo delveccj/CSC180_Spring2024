@@ -1,0 +1,6 @@
+version: "3.9"
+services:
+  rce-lab:
+    build: .
+    container_name: rce-lab
+
